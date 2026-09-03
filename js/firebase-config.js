@@ -1,8 +1,4 @@
 // ============================================================
-// À REMPLIR : colle ici la config de TON projet Firebase.
-// Console Firebase > Paramètres du projet (roue crantée) >
-// Général > "Vos applications" > icône Web (</>) > Config SDK.
-// ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyDvWNPTf9eeA9Qw02fiRvauN35DfW_qlTc",
   authDomain: "quiz-room-family.firebaseapp.com",

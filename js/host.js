@@ -27,6 +27,9 @@ QUIZ_ROUNDS.forEach((round, roundIndex) => {
 
 let pointer = -1; // index dans FLAT_QUESTIONS
 let players = {};
+let revealedKeys = new Set();
+let answersWatcherRef = null;
+let autoRevealTimer = null;
 
 const el = {
   status: document.getElementById("status"),
@@ -37,7 +40,6 @@ const el = {
   btnNewGame: document.getElementById("btnNewGame"),
   btnStart: document.getElementById("btnStart"),
   btnReveal: document.getElementById("btnReveal"),
-  btnNext: document.getElementById("btnNext"),
   btnLeaderboard: document.getElementById("btnLeaderboard"),
   btnFinish: document.getElementById("btnFinish"),
   joinUrl: document.getElementById("joinUrl"),
@@ -69,8 +71,21 @@ function renderPlayers() {
     .join("");
 }
 
+function clearAutoRevealWatchers() {
+  if (answersWatcherRef) {
+    answersWatcherRef.off();
+    answersWatcherRef = null;
+  }
+  if (autoRevealTimer) {
+    clearTimeout(autoRevealTimer);
+    autoRevealTimer = null;
+  }
+}
+
 async function resetGame() {
   if (!confirm("Démarrer une nouvelle partie ? Cela efface les scores et les joueurs connectés.")) return;
+  clearAutoRevealWatchers();
+  revealedKeys.clear();
   await db.ref("session").set({
     phase: "lobby",
     currentQuestion: null,
@@ -101,6 +116,7 @@ function updateProgressUI(q) {
 }
 
 async function launchNextQuestion() {
+  clearAutoRevealWatchers();
   pointer += 1;
   const q = currentFlatQuestion();
   if (!q) {
@@ -138,12 +154,30 @@ async function launchNextQuestion() {
     reveal: null,
   });
 
-  setStatus(`Question ${pointer + 1} lancée — ${QUESTION_DURATION_S}s`);
+  setStatus(`Question ${pointer + 1} lancée — révélation automatique dès que tout le monde a répondu, ou dans ${QUESTION_DURATION_S}s.`);
+
+  // --- Révélation automatique ---
+  const key = q.questionKey;
+  answersWatcherRef = db.ref(`answers/${key}`);
+  answersWatcherRef.on("value", (snap) => {
+    const total = Object.keys(players).length;
+    const answered = snap.exists()
+      ? Object.keys(snap.val()).filter((k) => k !== "__scored").length
+      : 0;
+    if (total > 0 && answered >= total) {
+      revealAnswer(key);
+    }
+  });
+  autoRevealTimer = setTimeout(() => revealAnswer(key), QUESTION_DURATION_S * 1000 + 400);
 }
 
-async function revealAnswer() {
+async function revealAnswer(expectedKey) {
   const q = currentFlatQuestion();
   if (!q) return;
+  if (expectedKey && q.questionKey !== expectedKey) return; // déclenchement obsolète (question déjà changée)
+  if (revealedKeys.has(q.questionKey)) return; // déjà révélée, on ignore les déclenchements en double
+  revealedKeys.add(q.questionKey);
+  clearAutoRevealWatchers();
 
   const snap = await db.ref(`answers/${q.questionKey}`).get();
   const rawAnswers = snap.exists() ? snap.val() : {};
@@ -196,8 +230,7 @@ db.ref("players").on("value", (snap) => {
 // --- UI wiring ---
 el.btnNewGame.addEventListener("click", resetGame);
 el.btnStart.addEventListener("click", launchNextQuestion);
-el.btnReveal.addEventListener("click", revealAnswer);
-el.btnNext.addEventListener("click", launchNextQuestion);
+el.btnReveal.addEventListener("click", () => revealAnswer());
 el.btnLeaderboard.addEventListener("click", showLeaderboard);
 el.btnFinish.addEventListener("click", finishGame);
 
