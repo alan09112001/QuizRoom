@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quiz Room — Écran</title>
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  body{ overflow:hidden; }
+  .tv-wrap{
+    height:100vh;
+    display:flex; flex-direction:column;
+    padding:48px 64px;
+  }
+  .tv-header{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:24px;
+  }
+  .tv-logo{ font-family:var(--font-display); font-size:2.4rem; letter-spacing:0.04em; }
+  .screen{ display:none; flex:1; flex-direction:column; animation:pop-in .4s ease; }
+  .screen.active{ display:flex; }
+
+  /* --- Lobby --- */
+  #screen-lobby{ align-items:center; justify-content:center; text-align:center; gap:28px; }
+  #screen-lobby h1{ font-size:4.4rem; }
+  .lobby-sub{ color:var(--ink-dim); font-size:1.3rem; }
+  .lobby-chips{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; max-width:900px; }
+  .lobby-chip{
+    padding:14px 26px; border-radius:999px; background:var(--bg-2);
+    border:1px solid var(--gold); font-size:1.3rem; font-weight:600;
+    animation:pulse-ring 2.4s ease infinite;
+  }
+  .join-box{ margin-top:12px; color:var(--ink-dim); font-size:1rem; }
+  #joinLink{ color:var(--teal); }
+
+  /* --- Question --- */
+  #screen-question{ gap:28px; }
+  .q-top{ display:flex; justify-content:space-between; align-items:flex-start; }
+  .q-round{ font-size:1.1rem; }
+  .q-prompt{ font-size:3rem; max-width:1100px; margin-top:8px; }
+  .q-answered{ color:var(--ink-dim); margin-top:10px; font-size:1.1rem; }
+  .options-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:22px; flex:1;
+  }
+  .option-tile{
+    background:var(--bg-2); border:1px solid var(--line); border-radius:var(--radius);
+    display:flex; align-items:center; gap:18px; padding:0 32px;
+    font-size:2rem; font-weight:600;
+  }
+  .option-letter{
+    font-family:var(--font-display); font-size:2.4rem; color:var(--gold);
+    width:56px; height:56px; border-radius:50%; border:2px solid var(--gold);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .estimation-box{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .estimation-box .unit{ font-size:1.6rem; color:var(--ink-dim); margin-top:14px; }
+
+  /* --- Reveal --- */
+  #screen-reveal{ align-items:center; justify-content:center; text-align:center; gap:20px; }
+  .reveal-answer{ font-size:2.6rem; color:var(--teal); }
+  .reveal-scores{ display:flex; flex-wrap:wrap; gap:14px; justify-content:center; max-width:1000px; }
+  .reveal-row{
+    padding:12px 22px; border-radius:14px; display:flex; gap:16px; font-size:1.2rem; font-weight:600;
+  }
+  .reveal-row.win{ background:rgba(18,214,179,0.15); border:1px solid var(--teal); }
+  .reveal-row.lose{ background:rgba(255,77,109,0.10); border:1px solid rgba(255,77,109,0.35); color:var(--ink-dim); }
+
+  /* --- Leaderboard --- */
+  #screen-leaderboard{ align-items:center; gap:20px; }
+  .lb-row{
+    width:100%; max-width:760px; display:flex; align-items:center; gap:20px;
+    padding:16px 26px; background:var(--bg-2); border-radius:14px; font-size:1.4rem;
+  }
+  .lb-rank{ font-family:var(--font-display); color:var(--gold); width:40px; }
+  .lb-name{ flex:1; font-weight:600; }
+
+  /* --- Podium --- */
+  #screen-finished{ align-items:center; justify-content:center; gap:36px; }
+  .podium{ display:flex; align-items:flex-end; gap:24px; }
+  .podium-step{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .podium-block{
+    font-family:var(--font-display); display:flex; align-items:center; justify-content:center;
+    width:150px; border-radius:12px 12px 0 0;
+    background:linear-gradient(180deg, var(--gold-soft), var(--gold));
+    color:#221600; font-size:2rem;
+  }
+  .step-1 .podium-block{ height:190px; }
+  .step-2 .podium-block{ height:140px; background:linear-gradient(180deg,#d8d8f0,#9a9ac4); }
+  .step-3 .podium-block{ height:100px; background:linear-gradient(180deg,#e0a56a,#b06a2e); }
+  .podium-name{ font-size:1.3rem; font-weight:700; }
+  .podium-score{ color:var(--ink-dim); }
+</style>
+</head>
+<body>
+  <div class="tv-wrap">
+    <div class="tv-header">
+      <div class="tv-logo">🎬 <span class="gold-text">QUIZ ROOM</span></div>
+      <div class="timer-ring" id="timerRing" style="display:none;"><span id="timerLabel">20</span></div>
+    </div>
+
+    <div id="screen-lobby" class="screen active">
+      <h1 class="gold-text">Bienvenue au Quiz Room</h1>
+      <p class="lobby-sub"><span id="lobbyCount">0</span> joueur(s) connecté(s)</p>
+      <div id="lobbyPlayers" class="lobby-chips"></div>
+      <p class="join-box">Rejoins depuis ton téléphone : <span id="joinLink"></span></p>
+      <img id="joinQr" alt="QR code pour rejoindre" style="border-radius:12px; background:white; padding:8px;" />
+    </div>
+
+    <div id="screen-question" class="screen">
+      <div class="q-top">
+        <div>
+          <div class="badge" id="qRoundTitle">Manche</div>
+          <div class="q-prompt display" id="qPrompt"></div>
+          <div class="q-answered" id="qAnsweredCount"></div>
+        </div>
+      </div>
+      <div class="options-grid" id="qOptions"></div>
+      <div class="estimation-box" id="qEstimation" style="display:none;">
+        <div class="display" style="font-size:2.4rem;">Réponse en cours de saisie sur les téléphones...</div>
+        <div class="unit" id="qUnit"></div>
+      </div>
+    </div>
+
+    <div id="screen-reveal" class="screen">
+      <div class="badge" id="revealRoundTitle"></div>
+      <div class="q-prompt display" id="revealPrompt" style="font-size:2rem;"></div>
+      <div class="reveal-answer display" id="revealAnswer"></div>
+      <div class="reveal-scores" id="revealScores"></div>
+    </div>
+
+    <div id="screen-leaderboard" class="screen">
+      <h2 class="gold-text" style="font-size:2.6rem;">Classement</h2>
+      <div id="leaderboardList" style="width:100%; display:flex; flex-direction:column; gap:12px; align-items:center;"></div>
+    </div>
+
+    <div id="screen-finished" class="screen">
+      <h1 class="gold-text">🏆 Résultats finaux 🏆</h1>
+      <div class="podium" id="podium"></div>
+      <div id="podiumRest" style="width:100%; max-width:600px; display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase-init.js"></script>
+  <script src="js/tv.js"></script>
+  <script>
+    // Affiche/masque le chrono selon l'écran actif
+    const observer = new MutationObserver(() => {
+      const active = document.getElementById("screen-question").classList.contains("active");
+      document.getElementById("timerRing").style.display = active ? "flex" : "none";
+    });
+    observer.observe(document.getElementById("screen-question"), { attributes:true, attributeFilter:["class"] });
+  </script>
+</body>
+</html>

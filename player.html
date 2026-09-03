@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Quiz Room — Ma télécommande</title>
+<link rel="stylesheet" href="css/style.css" />
+<style>
+  body{ min-height:100vh; }
+  .wrap{ max-width:480px; margin:0 auto; padding:24px 18px 40px; min-height:100vh; display:flex; flex-direction:column; }
+  .logo{ font-family:var(--font-display); font-size:1.6rem; text-align:center; margin-bottom:20px; }
+  .screen{ display:none; flex:1; flex-direction:column; animation:pop-in .35s ease; }
+  .screen.active{ display:flex; }
+
+  /* Login */
+  #screen-login{ gap:20px; justify-content:center; }
+  #screen-login h1{ font-size:2rem; text-align:center; }
+  .preset-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .preset-btn{
+    padding:18px; font-size:1.1rem; font-weight:700; background:var(--bg-2);
+    border:1px solid var(--line); border-radius:16px; color:var(--ink);
+  }
+  .preset-btn:hover{ border-color:var(--gold); }
+  .divider{ text-align:center; color:var(--ink-dim); margin:10px 0; }
+  #freeNameForm{ display:flex; gap:10px; }
+  #freeNameForm input{ flex:1; }
+  #freeNameForm button{ padding:0 20px; background:var(--gold); color:#221600; font-weight:700; }
+
+  /* Waiting */
+  #screen-waiting{ align-items:center; justify-content:center; text-align:center; gap:16px; }
+  .pulse-dot{ width:16px; height:16px; border-radius:50%; background:var(--teal); animation:pulse-ring 1.6s ease infinite; }
+
+  /* Question */
+  #screen-question{ gap:18px; }
+  .p-round{ align-self:flex-start; }
+  .p-prompt{ font-size:1.6rem; }
+  .qcm-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .answer-btn{
+    background:var(--bg-2); border:1px solid var(--line); border-radius:16px;
+    padding:20px 10px; color:var(--ink); font-size:1.05rem; font-weight:700;
+    display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
+  }
+  .answer-btn:hover{ border-color:var(--teal); }
+  .answer-btn.hidden-option{ opacity:0.15; }
+  .estimation-input-wrap{ display:flex; flex-direction:column; gap:10px; align-items:center; }
+  #estimationInput{ width:100%; font-size:1.6rem; text-align:center; padding:16px; }
+  .unit-label{ color:var(--ink-dim); }
+  #btnEstimationSubmit{ width:100%; padding:16px; background:var(--teal); color:#04211c; font-weight:700; font-size:1.1rem; }
+
+  .joker-bar{ display:none; gap:10px; align-items:center; flex-wrap:wrap; margin-top:auto; padding-top:14px; border-top:1px solid var(--line); }
+  .joker-btn{ background:var(--bg-2); border:1px solid var(--gold); color:var(--gold-soft); padding:10px 16px; font-weight:700; border-radius:12px; }
+  .copieur-wrap{ display:none; gap:8px; align-items:center; width:100%; }
+  #copieurSelect{ flex:1; }
+  #btnCopier{ background:var(--coral); color:white; padding:10px 14px; font-weight:700; }
+
+  /* Answered / Reveal */
+  #screen-answered, #screen-reveal{ align-items:center; justify-content:center; text-align:center; gap:16px; }
+  .reveal-box{ font-size:1.4rem; padding:20px; border-radius:16px; }
+  .reveal-box.win{ background:rgba(18,214,179,0.15); border:1px solid var(--teal); }
+  .reveal-box.lose{ background:rgba(255,77,109,0.10); border:1px solid rgba(255,77,109,0.35); }
+
+  /* Leaderboard / finished */
+  #screen-leaderboard, #screen-finished{ align-items:center; gap:16px; text-align:center; }
+  .lb-row{ width:100%; display:flex; gap:14px; padding:12px 18px; background:var(--bg-2); border-radius:12px; }
+  .lb-rank{ font-family:var(--font-display); color:var(--gold); width:28px; }
+  .lb-name{ flex:1; text-align:left; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">🎬 <span class="gold-text">QUIZ ROOM</span></div>
+
+  <div id="screen-login" class="screen active">
+    <h1>Qui joue ?</h1>
+    <div class="preset-grid" id="presetPlayers"></div>
+    <div class="divider">— ou —</div>
+    <form id="freeNameForm">
+      <input id="freeNameInput" type="text" placeholder="Autre prénom" maxlength="20" />
+      <button type="submit">OK</button>
+    </form>
+  </div>
+
+  <div id="screen-waiting" class="screen">
+    <div class="pulse-dot"></div>
+    <p>Connecté en tant que <strong id="myNameLabel"></strong></p>
+    <p style="color:var(--ink-dim);">En attente du lancement de la partie...</p>
+  </div>
+
+  <div id="screen-question" class="screen">
+    <div class="badge p-round" id="pRoundTitle"></div>
+    <div class="p-prompt display" id="pPrompt"></div>
+
+    <div class="qcm-grid" id="pQcmOptions"></div>
+
+    <div class="estimation-input-wrap" id="pEstimation" style="display:none;">
+      <input id="estimationInput" type="number" step="any" inputmode="decimal" placeholder="Ta réponse" />
+      <div class="unit-label" id="pUnit"></div>
+      <button id="btnEstimationSubmit">Valider</button>
+    </div>
+
+    <div class="joker-bar" id="jokerBar">
+      <button class="joker-btn" id="btn5050">🕶️ 50/50</button>
+      <div class="copieur-wrap" id="copieurWrap">
+        <select id="copieurSelect"></select>
+        <button id="btnCopier">🎭 Copier</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-answered" class="screen">
+    <div style="font-size:3rem;">✅</div>
+    <p>Réponse envoyée ! En attente des autres joueurs...</p>
+  </div>
+
+  <div id="screen-reveal" class="screen">
+    <div class="reveal-box" id="pRevealResult"></div>
+  </div>
+
+  <div id="screen-leaderboard" class="screen">
+    <h2 class="gold-text">Classement</h2>
+    <div id="pLeaderboardList" style="width:100%; display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+
+  <div id="screen-finished" class="screen">
+    <h1 class="gold-text">Partie terminée !</h1>
+    <p style="font-size:1.4rem;" id="pFinalRank"></p>
+    <p style="color:var(--ink-dim);" id="pFinalScore"></p>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/firebase-init.js"></script>
+<script src="js/players-list.js"></script>
+<script src="js/player.js"></script>
+</body>
+</html>
