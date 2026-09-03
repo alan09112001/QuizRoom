@@ -69,7 +69,10 @@ function renderQuestion(q) {
   hasAnsweredThisQuestion = false;
   hidden5050Indices = [];
   document.getElementById("pRoundTitle").textContent = q.roundTitle;
-  document.getElementById("pPrompt").textContent = q.prompt;
+  document.getElementById("pPrompt").textContent =
+    q.type === "estimation"
+      ? "👀 Regarde l'écran pour la question, puis tape ton estimation"
+      : "👀 Regarde l'écran pour la question et les réponses A / B / C / D";
 
   const qcmWrap = document.getElementById("pQcmOptions");
   const estimationWrap = document.getElementById("pEstimation");
@@ -89,8 +92,8 @@ function renderQuestion(q) {
     qcmWrap.innerHTML = q.options
       .map(
         (opt, i) =>
-          `<button class="answer-btn opt-${i}" data-index="${i}">
-            <span class="option-letter">${OPTION_LABELS[i]}</span>${opt}
+          `<button class="answer-btn opt-${i} opt-c${i}" data-index="${i}">
+            <span class="option-letter">${OPTION_LABELS[i]}</span>
           </button>`
       )
       .join("");

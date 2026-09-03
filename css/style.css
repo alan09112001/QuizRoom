@@ -12,6 +12,7 @@
   --gold-soft:#f7d774;
   --teal:#12d6b3;
   --coral:#ff4d6d;
+  --violet:#7c5cff;
   --ink:#f4f1ff;
   --ink-dim:#a79fc9;
   --line: rgba(244,241,255,0.12);
@@ -135,3 +136,9 @@ input, select{
 @media (prefers-reduced-motion: reduce){
   *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
 }
+
+/* --- Couleurs partagées A/B/C/D entre l'écran TV et les téléphones --- */
+.opt-c0{ --opt-color: var(--teal); }
+.opt-c1{ --opt-color: var(--gold); }
+.opt-c2{ --opt-color: var(--coral); }
+.opt-c3{ --opt-color: var(--violet); }

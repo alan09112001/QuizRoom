@@ -49,7 +49,7 @@ function renderQuestion(q, answers, players) {
     optionsWrap.innerHTML = q.options
       .map(
         (opt, i) =>
-          `<div class="option-tile"><span class="option-letter">${OPTION_LABELS[i]}</span>${opt}</div>`
+          `<div class="option-tile opt-c${i}"><span class="option-letter">${OPTION_LABELS[i]}</span>${opt}</div>`
       )
       .join("");
   }

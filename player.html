@@ -33,15 +33,17 @@
   /* Question */
   #screen-question{ gap:18px; }
   .p-round{ align-self:flex-start; }
-  .p-prompt{ font-size:1.6rem; }
-  .qcm-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .p-prompt{ font-size:1.15rem; color:var(--ink-dim); text-align:center; }
+  .qcm-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   .answer-btn{
-    background:var(--bg-2); border:1px solid var(--line); border-radius:16px;
-    padding:20px 10px; color:var(--ink); font-size:1.05rem; font-weight:700;
-    display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center;
+    background:var(--opt-color, var(--bg-2)); border:none; border-radius:20px;
+    padding:0; color:#0c0a1a; font-weight:800;
+    aspect-ratio:1 / 1; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 0 rgba(0,0,0,0.25);
   }
-  .answer-btn:hover{ border-color:var(--teal); }
-  .answer-btn.hidden-option{ opacity:0.15; }
+  .answer-btn .option-letter{ font-family:var(--font-display); font-size:3rem; }
+  .answer-btn:active{ box-shadow:0 3px 0 rgba(0,0,0,0.25); }
+  .answer-btn.hidden-option{ opacity:0.12; box-shadow:none; }
   .estimation-input-wrap{ display:flex; flex-direction:column; gap:10px; align-items:center; }
   #estimationInput{ width:100%; font-size:1.6rem; text-align:center; padding:16px; }
   .unit-label{ color:var(--ink-dim); }
